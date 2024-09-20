@@ -13,6 +13,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Create branch
+      id: create_branch
       run: |
         issue_number=$(jq -r '.issue.number' $GITHUB_EVENT_PATH)
         issue_title=$(jq -r '.issue.title' $GITHUB_EVENT_PATH)
@@ -20,16 +21,20 @@ jobs:
         # Create a safe branch name by replacing spaces with dashes and converting to lowercase
         title_with_dashes=$(echo "${issue_title// /-}" | tr '[:upper:]' '[:lower:]')
         branch_name="issue-${issue_number}-${title_with_dashes}"
-        
+    
         git config --global user.email "action@github.com"
         git config --global user.name "GitHub Action"
         git checkout -b "$branch_name"
         git push origin "$branch_name"
-
+    
+        echo "::set-output name=branch_name::$branch_name"  # Set the branch name as output
+    
     - name: Comment on the issue with the branch name
       run: |
         issue_number=$(jq -r '.issue.number' $GITHUB_EVENT_PATH)
+        branch_name="${{ steps.create_branch.outputs.branch_name }}"  # Access the output
         comment_body="Branch [$branch_name](https://github.com/${{ github.repository }}/tree/${branch_name}) created for this issue."
         gh issue comment $issue_number --body "$comment_body"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
