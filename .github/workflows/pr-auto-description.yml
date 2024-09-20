@@ -9,10 +9,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Get Issue Number from Branch Name
+    - name: Extract Issue Number from Branch Name
       id: issue
       run: |
-        echo "::set-output name=issue_number::$(echo "${{ github.event.pull_request.head.ref }}" | grep -o '[0-9]\+')"
+        ISSUE_NUMBER=$(echo "${{ github.event.pull_request.head.ref }}" | grep -o '[0-9]\+')
+        echo "Issue Number: $ISSUE_NUMBER"
+        echo "::set-output name=issue_number::$ISSUE_NUMBER"
+
+    - name: Check Issue Number Validity
+      if: steps.issue.outputs.issue_number == ''
+      run: |
+        echo "No valid issue number found in branch name. Please ensure the branch is named like 'issue-123-feature'."
+        exit 1
 
     - name: Get Issue Description
       id: issue_description
@@ -20,12 +28,22 @@ jobs:
       with:
         script: |
           const issue_number = ${{ steps.issue.outputs.issue_number }};
+          if (!issue_number) {
+            throw new Error("No issue number found. Ensure the branch follows the 'issue-<number>' naming pattern.");
+          }
           const issue = await github.rest.issues.get({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: issue_number
           });
+          if (!issue.data) {
+            throw new Error(`Issue #${issue_number} not found.`);
+          }
           return issue.data.body;
+
+    - name: Log Issue Description
+      run: |
+        echo "Issue Description: ${{ steps.issue_description.outputs.result }}"
 
     - name: Update Pull Request Description
       uses: actions/github-script@v6
@@ -33,9 +51,10 @@ jobs:
         script: |
           const pr_number = context.payload.pull_request.number;
           const issue_body = ${{ steps.issue_description.outputs.result }};
+          const issue_number = ${{ steps.issue.outputs.issue_number }};
           await github.rest.pulls.update({
             owner: context.repo.owner,
             repo: context.repo.repo,
             pull_number: pr_number,
-            body: `This PR addresses issue #${{ steps.issue.outputs.issue_number }}\n\nIssue Description:\n${issue_body}`
+            body: `This PR addresses issue #${issue_number}\n\nIssue Description:\n${issue_body}`
           });
