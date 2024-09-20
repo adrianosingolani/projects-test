@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Get Issue Number
+    - name: Get Issue Number from Branch Name
       id: issue
       run: |
         echo "::set-output name=issue_number::$(echo "${{ github.event.pull_request.head.ref }}" | grep -o '[0-9]\+')"
@@ -27,13 +27,15 @@ jobs:
           });
           return issue.data.body;
 
-    - name: Update PR Description
-      uses: actions-ecosystem/action-update-comment@v1
+    - name: Update Pull Request Description
+      uses: actions/github-script@v6
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        comment_id: ${{ github.event.pull_request.node_id }}
-        body: |
-          This PR addresses issue #${{ steps.issue.outputs.issue_number }}
-
-          Issue Description:
-          ${{ steps.issue_description.outputs.result }}
+        script: |
+          const pr_number = context.payload.pull_request.number;
+          const issue_body = ${{ steps.issue_description.outputs.result }};
+          await github.rest.pulls.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: pr_number,
+            body: `This PR addresses issue #${{ steps.issue.outputs.issue_number }}\n\nIssue Description:\n${issue_body}`
+          });
