@@ -1,0 +1,28 @@
+name: Update Issue Status to Done or Closed
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update_issue_status:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Update issue status to "Done" or "Closed"
+      run: |
+        # Extract issue number from PR title or branch name
+        issue_number=$(echo "${{ github.head_ref }}" | grep -oP 'issue-\K[0-9]+')
+        
+        if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+          # PR was merged
+          gh issue edit "$issue_number" --add-label "Done"
+        else
+          # PR was closed without merging
+          gh issue edit "$issue_number" --add-label "Closed"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

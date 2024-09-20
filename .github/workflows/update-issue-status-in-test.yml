@@ -1,0 +1,23 @@
+name: Update Issue Status to In Test
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  update_issue_status:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Update issue status to "In Test"
+      run: |
+        # Extract issue number from PR title or branch name
+        issue_number=$(echo "${{ github.head_ref }}" | grep -oP 'issue-\K[0-9]+')
+        
+        # Assuming you have the GitHub CLI installed and authenticated
+        gh issue edit "$issue_number" --add-label "In Test"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
