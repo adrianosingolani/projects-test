@@ -1,0 +1,39 @@
+name: Auto PR Description
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  copy_issue_description:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get Issue Number
+      id: issue
+      run: |
+        echo "::set-output name=issue_number::$(echo "${{ github.event.pull_request.head.ref }}" | grep -o '[0-9]\+')"
+
+    - name: Get Issue Description
+      id: issue_description
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const issue_number = ${{ steps.issue.outputs.issue_number }};
+          const issue = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue_number
+          });
+          return issue.data.body;
+
+    - name: Update PR Description
+      uses: actions-ecosystem/action-update-comment@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        comment_id: ${{ github.event.pull_request.node_id }}
+        body: |
+          This PR addresses issue #${{ steps.issue.outputs.issue_number }}
+
+          Issue Description:
+          ${{ steps.issue_description.outputs.result }}
