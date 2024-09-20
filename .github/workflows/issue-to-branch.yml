@@ -34,7 +34,7 @@ jobs:
         issue_number=$(jq -r '.issue.number' $GITHUB_EVENT_PATH)
         branch_name="${{ steps.create_branch.outputs.branch_name }}"  # Access the output
         # comment_body="Branch: [$branch_name](https://github.com/${{ github.repository }}/tree/${branch_name}) created for this issue."
-        comment_body="Branch: [$branch_name]"
+        comment_body="Branch: $branch_name"
         gh issue comment $issue_number --body "$comment_body"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
