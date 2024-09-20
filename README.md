@@ -1,2 +1,2 @@
 # projects-test
-A repository for testing GitHub Projects features
+A repository for testing GitHub Projects features.
