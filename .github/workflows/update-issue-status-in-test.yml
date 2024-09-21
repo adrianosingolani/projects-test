@@ -10,7 +10,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3  # Ensure you're using the latest version
 
     - name: Get issue number from branch name
       id: get_issue_number
