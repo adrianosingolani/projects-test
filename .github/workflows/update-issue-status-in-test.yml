@@ -23,11 +23,19 @@ jobs:
       id: get_status
       run: |
         issue_number="${{ env.ISSUE_NUMBER }}"
-        # Replace this with the actual API call to get the custom field values
+        # Retrieve the current Status
         current_status=$(gh api -X GET "/repos/${{ github.repository }}/issues/$issue_number" | jq -r '.custom_fields[] | select(.name == "Status").value')
-        possible_values="In Test, In Progress, Done"  # Adjust this list based on your actual values
+        possible_values="In Test, In Progress, Done"  # Adjust based on your actual values
         echo "CURRENT_STATUS=$current_status" >> $GITHUB_ENV
         echo "POSSIBLE_VALUES=$possible_values" >> $GITHUB_ENV
+
+    - name: Update Status to "In Test"
+      run: |
+        issue_number="${{ env.ISSUE_NUMBER }}"
+        # Update the Status custom field to "In Test"
+        gh api -X PATCH "/repos/${{ github.repository }}/issues/$issue_number" -f custom_fields='{"Status":"In Test"}'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Comment on the issue with status
       run: |
