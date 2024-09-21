@@ -20,15 +20,17 @@ jobs:
 
     - name: Get project ID
       id: get_project_id
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set GH_TOKEN here
       run: |
-        issue_number=${{ env.issue_number }}
-        project_id=$(gh issue view "$issue_number" --json projectIds -q ".projectIds[0]")  # Get the first project ID
+        issue_number=$(echo "$issue_number")  # Access it directly
+        project_id=$(gh issue view "$issue_number" --json projectIds -q ".projectIds[0]")
         echo "project_id=$project_id" >> $GITHUB_ENV
 
     - name: Update issue custom field "Status" to "In Test"
       run: |
-        issue_number=${{ env.issue_number }}
-        project_id=${{ env.project_id }}
+        issue_number=$(echo "$issue_number")  # Access it directly
+        project_id=$(echo "$project_id")  # Access it directly
         issue_id=$(gh issue view "$issue_number" --json id -q ".id")
     
         curl -X PATCH \
@@ -41,4 +43,4 @@ jobs:
             }
           }'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Include it here as well
