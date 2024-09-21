@@ -1,46 +1,29 @@
-name: Update Issue Status to In Test
+name: Update Issue Status on PR
 
 on:
   pull_request:
     types: [opened]
 
 jobs:
-  update_issue_status:
+  update_status:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repo
       uses: actions/checkout@v2
 
-    - name: Get issue number
+    - name: Get issue number from branch name
       id: get_issue_number
       run: |
-        issue_number=$(echo "${{ github.head_ref }}" | grep -oP 'issue-\K[0-9]+')
-        echo "issue_number=$issue_number" >> $GITHUB_ENV
+        branch_name="${{ github.head_ref }}"
+        issue_number=$(echo "$branch_name" | sed -E 's/^issue-([0-9]+)-.*$/\1/')
+        echo "::set-output name=issue_number::$issue_number"
 
-    - name: Get project ID
-      id: get_project_id
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set GH_TOKEN here
+    - name: Update issue custom field
       run: |
-        issue_number=$(echo "$issue_number")  # Access it directly
-        project_id=$(gh issue view "$issue_number" --json projectIds -q ".projectIds[0]")
-        echo "project_id=$project_id" >> $GITHUB_ENV
-
-    - name: Update issue custom field "Status" to "In Test"
-      run: |
-        issue_number=$(echo "$issue_number")  # Access it directly
-        project_id=$(echo "$project_id")  # Access it directly
-        issue_id=$(gh issue view "$issue_number" --json id -q ".id")
-    
-        curl -X PATCH \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v4+json" \
-          https://api.github.com/projects/columns/cards/$issue_id \
-          -d '{
-            "fields": {
-              "Status": "In Test"
-            }
-          }'
+        issue_number="${{ steps.get_issue_number.outputs.issue_number }}"
+        # Assuming you have a command or API call to update the custom field
+        # Replace this with your actual command/API
+        gh api -X PATCH "/repos/${{ github.repository }}/issues/$issue_number" -f custom_fields='{"Status":"In Test"}'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Include it here as well
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
