@@ -1,11 +1,11 @@
-name: Update Issue Status on PR
+name: Comment on Issue When PR Created
 
 on:
   pull_request:
     types: [opened]
 
 jobs:
-  update_status:
+  comment_issue:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,13 +17,12 @@ jobs:
       run: |
         branch_name="${{ github.head_ref }}"
         issue_number=$(echo "$branch_name" | sed -E 's/^issue-([0-9]+)-.*$/\1/')
-        echo "::set-output name=issue_number::$issue_number"
+        echo "ISSUE_NUMBER=$issue_number" >> $GITHUB_ENV
 
-    - name: Update issue custom field
+    - name: Comment on the issue with status
       run: |
-        issue_number="${{ steps.get_issue_number.outputs.issue_number }}"
-        # Assuming you have a command or API call to update the custom field
-        # Replace this with your actual command/API
-        gh api -X PATCH "/repos/${{ github.repository }}/issues/$issue_number" -f custom_fields='{"Status":"In Test"}'
+        issue_number="${{ env.ISSUE_NUMBER }}"
+        comment_body="Status: In Test"
+        gh issue comment $issue_number --body "$comment_body"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
