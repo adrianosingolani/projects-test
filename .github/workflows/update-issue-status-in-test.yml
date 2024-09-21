@@ -15,10 +15,9 @@ jobs:
     - name: Update issue status to "In Test"
       run: |
         issue_number=$(echo "${{ github.head_ref }}" | grep -oP 'issue-\K[0-9]+')
-        curl -X PATCH \
+        response=$(curl -X PATCH \
           -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/${{ github.repository }}/issues/$issue_number \
-          -d '{"custom_fields": {"Status": "In Test"}}'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          -d '{"custom_fields": {"Status": "In Test"}}')
+        echo "$response"    
