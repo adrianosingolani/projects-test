@@ -36,19 +36,3 @@ jobs:
         gh api -X PATCH "/repos/${{ github.repository }}/issues/$issue_number" -f custom_fields='{"Status":"In Test"}'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Comment on the issue with status
-      run: |
-        issue_number="${{ env.ISSUE_NUMBER }}"
-        current_status="${{ env.CURRENT_STATUS }}"
-        possible_values="${{ env.POSSIBLE_VALUES }}"
-        
-        comment_body_status="Status: In Test"
-        comment_body_current_status="Current Status: $current_status"
-        comment_body_possible_values="Possible Status Values: $possible_values"
-
-        gh issue comment $issue_number --body "$comment_body_status"
-        gh issue comment $issue_number --body "$comment_body_current_status"
-        gh issue comment $issue_number --body "$comment_body_possible_values"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
