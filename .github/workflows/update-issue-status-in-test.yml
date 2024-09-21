@@ -19,10 +19,28 @@ jobs:
         issue_number=$(echo "$branch_name" | sed -E 's/^issue-([0-9]+)-.*$/\1/')
         echo "ISSUE_NUMBER=$issue_number" >> $GITHUB_ENV
 
+    - name: Get current Status and possible values
+      id: get_status
+      run: |
+        issue_number="${{ env.ISSUE_NUMBER }}"
+        # Replace this with the actual API call to get the custom field values
+        current_status=$(gh api -X GET "/repos/${{ github.repository }}/issues/$issue_number" | jq -r '.custom_fields[] | select(.name == "Status").value')
+        possible_values="In Test, In Progress, Done"  # Adjust this list based on your actual values
+        echo "CURRENT_STATUS=$current_status" >> $GITHUB_ENV
+        echo "POSSIBLE_VALUES=$possible_values" >> $GITHUB_ENV
+
     - name: Comment on the issue with status
       run: |
         issue_number="${{ env.ISSUE_NUMBER }}"
-        comment_body="Status: In Test"
-        gh issue comment $issue_number --body "$comment_body"
+        current_status="${{ env.CURRENT_STATUS }}"
+        possible_values="${{ env.POSSIBLE_VALUES }}"
+        
+        comment_body_status="Status: In Test"
+        comment_body_current_status="Current Status: $current_status"
+        comment_body_possible_values="Possible Status Values: $possible_values"
+
+        gh issue comment $issue_number --body "$comment_body_status"
+        gh issue comment $issue_number --body "$comment_body_current_status"
+        gh issue comment $issue_number --body "$comment_body_possible_values"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
